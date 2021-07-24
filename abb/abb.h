@@ -3,17 +3,16 @@
 #include <string.h>
 #include <stdbool.h>
 
-//struct del abb
+//Struct del abb
 typedef struct abb abb_t;
 
-//struct del abb_iter
-
+//Struct del abb_iter
 typedef struct abb_iter abb_iter_t;
 
-// tipo de función para comparar clave
+// Tipo de función para comparar clave
 typedef int (*abb_comparar_clave_t) (const char *, const char *);
 
-// tipo de función para destruir dato
+// Tipo de función para destruir dato
 typedef void (*abb_destruir_dato_t) (void *);
 
 /* Crea el abb
@@ -58,14 +57,38 @@ size_t abb_cantidad(abb_t *arbol);
  */
 void abb_destruir(abb_t *arbol);
 
-//funcion del iterador interno
-
+/*Funcion del iterador interno
+ * Itera todos los elementos del abb, aplicando en cada elemento la funcion visitar
+ * Pre: La estructura abb fue inicializada
+ */
 void abb_in_order(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra);
 
-//funcion del iterador externo
 
+
+
+/* Crea el iterador del abb
+ * Pre: La estructura abb fue inicializada
+ */
 abb_iter_t *abb_iter_in_crear(const abb_t *arbol);
+
+/* Avanza el iterador
+ * Pre: El iterador fue inicializado
+ */
 bool abb_iter_in_avanzar(abb_iter_t *iter);
+
+/* Devuelve el dato de la posicion actual del iterador
+ * Pre: El iterador fue inicializado
+ */
 const char *abb_iter_in_ver_actual(const abb_iter_t *iter);
+
+/* Devuelve un bool dependiendo de si el iterador esta en el final o no
+ * Pre: El iterador fue inicializado
+ * Post: Devuelve true si el iterador esta en el final del abb; caso contrario devuelve false
+ */
 bool abb_iter_in_al_final(const abb_iter_t *iter);
+
+/* Destruye el iterador
+ * Pre: El iterador fue inicializado
+ * Post: El iterador es destruido
+ */
 void abb_iter_in_destruir(abb_iter_t* iter);

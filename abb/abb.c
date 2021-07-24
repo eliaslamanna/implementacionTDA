@@ -19,10 +19,10 @@ struct abb{
 	size_t cantidad;
 };
 
-typedef struct abb_iter{
+struct abb_iter{
 	nodo_abb_t* nodo_actual;
 	pila_t* pila;
-} abb_iter_t;
+};
 
 nodo_abb_t* abb_nodo_crear(void* valor, const char* clave){
 	nodo_abb_t* nodo = malloc(sizeof(nodo_abb_t));
@@ -54,31 +54,15 @@ nodo_abb_t* abb_nodo_buscar(const abb_t* arbol, nodo_abb_t* nodo, const char* cl
 	if(nodo == NULL){
 		return NULL;
 	}
-	if(arbol->cmp(nodo->clave, clave) == 0){
+	int comparacion = arbol->cmp(nodo->clave, clave);
+	if(comparacion == 0){
 		return nodo;
 	}
-	else if(arbol->cmp(nodo->clave, clave) > 0){
+	else if(comparacion > 0){
 		return abb_nodo_buscar(arbol, nodo->izq, clave);
 	}
 	else{
 		return abb_nodo_buscar(arbol, nodo->der, clave);
-	}
-}
-
-nodo_abb_t* abb_buscar_anterior(const abb_t* arbol, nodo_abb_t* nodo_actual, nodo_abb_t* nodo_dado, pila_t* pila){
-	if(arbol->cantidad <= 3){
-		return arbol->raiz;
-	}
-	if(arbol->cmp(nodo_actual->clave, nodo_dado->clave) == 0){
-		return pila_ver_tope(pila);
-	}
-	if(arbol->cmp(nodo_actual->clave, nodo_dado->clave) > 0){
-		pila_apilar(pila,nodo_actual);
-		return abb_buscar_anterior(arbol, nodo_actual->izq, nodo_dado, pila);
-	}
-	else{
-		pila_apilar(pila,nodo_actual);
-		return abb_buscar_anterior(arbol, nodo_actual->der, nodo_dado, pila);
 	}
 }
 
@@ -159,10 +143,7 @@ abb_t* abb_crear(abb_comparar_clave_t cmp, abb_destruir_dato_t destruir_dato){
 
 bool abb_pertenece(const abb_t *arbol, const char *clave){
 	nodo_abb_t* nodo = abb_nodo_buscar(arbol, arbol->raiz, clave);
-	if(nodo == NULL){
-		return false;
-	}
-	return true;
+	return nodo != NULL;
 }
 
 void *abb_obtener(const abb_t *arbol, const char *clave){
@@ -174,11 +155,8 @@ void *abb_obtener(const abb_t *arbol, const char *clave){
 }
 
 bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
-	if(abb_pertenece(arbol, clave)){
-		nodo_abb_t* nodo = abb_nodo_buscar(arbol, arbol->raiz, clave);
-		if(nodo == NULL){
-			return false;
-		}
+	nodo_abb_t* nodo = abb_nodo_buscar(arbol, arbol->raiz, clave);
+	if(nodo != NULL){
 		if(arbol->destruir_dato != NULL){
 			arbol->destruir_dato(nodo->dato);
 		}
@@ -218,7 +196,8 @@ size_t abb_cantidad(abb_t *arbol){
 }
 
 void *abb_borrar(abb_t *arbol, const char *clave){
-	if(!abb_pertenece(arbol, clave)){
+	nodo_abb_t* nodo = abb_nodo_buscar(arbol, arbol->raiz, clave);
+	if(nodo == NULL){
 		return NULL;
 	}
 	
@@ -229,14 +208,11 @@ void *abb_borrar(abb_t *arbol, const char *clave){
 		arbol->cantidad --;
 		return valor;
 	}
-
-	nodo_abb_t* nodo = abb_nodo_buscar(arbol, arbol->raiz, clave);
 	void* valor;
 
 	pila_t* pila = pila_crear();
 	if(!pila) return NULL;
 	if(abb_cantidad_hijos(nodo) == 0){
-		
 		nodo_abb_t* padre = abb_buscar_padre(arbol,arbol->raiz, nodo, pila);
 
 		if(padre->izq == nodo){
@@ -273,8 +249,6 @@ void *abb_borrar(abb_t *arbol, const char *clave){
 		abb_nodo_destruir(arbol, nodo);
 	}
 	else{
-		
-
 		nodo_abb_t* reemplazo = abb_nodo_buscar_reemplazo(arbol, nodo);
 		nodo_abb_t* padre_reemplazo = abb_buscar_padre(arbol,arbol->raiz, reemplazo, pila);
 		
@@ -329,21 +303,17 @@ void abb_destruir(abb_t* arbol){
 
 //funciones iter
 
-void _abb_in_order(nodo_abb_t* nodo, bool visitar(const char*, void*, void*), void* extra){
-	if(nodo == NULL){
-		return;
-	}
-	_abb_in_order(nodo->izq, visitar, extra);
-	if(!visitar(nodo->clave,nodo->dato, extra)){
-		return;
-	}
-	_abb_in_order(nodo->der, visitar, extra);
+bool _abb_in_order(nodo_abb_t* nodo, bool visitar(const char*, void*, void*), void* extra){
+	if(nodo == NULL) return true;
+	
+	if(!_abb_in_order(nodo->izq, visitar, extra)) return false;
+	if(!visitar(nodo->clave,nodo->dato, extra)) return false;
+	if(!_abb_in_order(nodo->der, visitar, extra)) return false;
+
+	return true;
 }
 
 void abb_in_order(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra){
-	if(arbol == NULL){
-		return;
-	}
 	_abb_in_order(arbol->raiz, visitar, extra);
 }
 
@@ -362,6 +332,7 @@ abb_iter_t *abb_iter_in_crear(const abb_t *arbol){
 	}
 	pila_t* pila = pila_crear();
 	if(pila == NULL){
+		free(abb_iter);
 		return NULL;
 	}
 	abb_iter->pila = pila;
