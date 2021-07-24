@@ -1,0 +1,27 @@
+nodo_abb_t* abb_buscar_padre(const abb_t* arbol, nodo_abb_t* nodo_actual, nodo_abb_t* nodo_dado, pila_t* pila){
+	if(arbol->cantidad == 1){
+		return nodo_actual;
+	}
+	if(arbol->cmp(arbol->raiz->clave, nodo_dado->clave) == 0){
+		return arbol->raiz;
+	}
+	pila_apilar(pila,nodo_actual);
+	if(arbol->cmp(nodo_actual->clave, nodo_dado->clave) == 0){
+		pila_desapilar(pila);
+		return pila_ver_tope(pila);
+	}
+	if(arbol->cmp(nodo_actual->clave, nodo_dado->clave) > 0){
+		if(nodo_actual->izq == NULL){
+			pila_desapilar(pila);
+			return pila_ver_tope(pila);
+		}
+		return abb_buscar_padre(arbol, nodo_actual->izq, nodo_dado, pila);
+	}
+	else{
+		if(nodo_actual->der == NULL){
+			pila_desapilar(pila);
+			return pila_ver_tope(pila);
+		}
+		return abb_buscar_padre(arbol, nodo_actual->der, nodo_dado, pila);
+	}
+}
